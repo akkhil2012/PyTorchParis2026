@@ -1,0 +1,344 @@
+Perfect.
+This will be a **30-day focused mastery plan** specifically for *your Blackwell-era governance thesis*.
+
+Goal:
+
+> In 30 days, you should be able to confidently defend:
+>
+> * Why Blackwell shifts bottleneck
+> * Why p99 explodes under high concurrency
+> * Why governance > kernel optimization in multi-tenant inference
+> * How to implement it in PyTorch/vLLM
+
+This is not academic reading.
+This is **conference + architect-level readiness**.
+
+---
+
+# 🗓 STRUCTURE
+
+Each week has a theme:
+
+* **Week 1** → GPU + Blackwell mental models
+* **Week 2** → Inference mechanics (vLLM, KV cache, batching)
+* **Week 3** → Tail latency + interference math
+* **Week 4** → Governance design + defense + stage confidence
+
+---
+
+# 🔵 WEEK 1 — Blackwell & Concurrency Foundations
+
+### 🎯 Objective
+
+Understand why Blackwell increases concurrency and why that changes economics.
+
+---
+
+## Day 1–2: Blackwell Deep Dive
+
+Read:
+
+* Blackwell architecture whitepaper
+* Hopper whitepaper (for contrast)
+
+Understand:
+
+* HBM capacity increase
+* Memory bandwidth vs capacity difference
+* NVFP4 precision economics
+* Tensor core concurrency scaling
+* Why more sequences fit per GPU
+
+Deliverable:
+
+* 1 slide explaining:
+
+  > “Why Hopper was bandwidth-constrained and Blackwell is concurrency-constrained”
+
+---
+
+## Day 3–4: GPU Memory Hierarchy
+
+Understand:
+
+* SMs
+* L2 cache
+* HBM
+* Warp scheduling
+* Why memory stalls mattered before
+
+Deliverable:
+Draw your own diagram:
+
+```
+SM → L2 → HBM
+```
+
+Explain where interference can occur.
+
+---
+
+## Day 5–6: Concurrency vs Utilization
+
+Simulate:
+
+* 50% utilization
+* 75% utilization
+* 90% utilization
+
+Plot p50 and p99.
+
+You must visually see nonlinear growth.
+
+---
+
+## Day 7: Reflection
+
+Write 1-page note:
+
+> “Why Blackwell shifts bottleneck from bandwidth to fairness”
+
+If you can’t write it clearly, revisit.
+
+---
+
+# 🔵 WEEK 2 — vLLM & Inference Engine Internals
+
+### 🎯 Objective
+
+Understand continuous batching and KV cache deeply.
+
+---
+
+## Day 8–9: vLLM Paper
+
+Study:
+
+* PagedAttention
+* KV cache paging
+* Continuous batching
+* Decode iteration model
+
+Understand:
+
+* Why heterogeneous context lengths hurt fairness
+* Why longer sequences dominate decode slots
+
+---
+
+## Day 10–11: KV Cache Mechanics
+
+Model:
+
+* What happens when KV cache is full?
+* What happens during eviction?
+* Why eviction causes recompute?
+
+Create diagram:
+
+```
+Request → KV allocate → Decode loop → Eviction → Recompute
+```
+
+---
+
+## Day 12–13: Long Context & Interference
+
+Simulate:
+
+* 70% short requests
+* 30% long requests
+
+Measure:
+
+* p50
+* p99
+* Variance
+
+Observe interference amplification.
+
+---
+
+## Day 14: Write Internal Memo
+
+Title:
+
+> “Why Best-Effort Batching Fails in Blackwell Era”
+
+This builds clarity.
+
+---
+
+# 🔵 WEEK 3 — Tail Latency & Queueing Mastery
+
+### 🎯 Objective
+
+Own p99 mathematically.
+
+---
+
+## Day 15–16: The Tail at Scale
+
+Read and extract:
+
+* Why tail latency compounds
+* Why large systems amplify variance
+
+Relate to:
+
+* Multi-tenant inference
+* Decode step contention
+
+---
+
+## Day 17–18: Queueing Model
+
+Learn:
+M/M/1 approximation:
+
+Latency ≈ 1 / (μ − λ)
+
+Observe:
+As λ → μ, latency → infinity
+
+Simulate this.
+
+Plot utilization vs latency.
+
+---
+
+## Day 19–20: Interference Model
+
+Add:
+
+* Priority scheduling
+* Admission control
+
+Compare:
+
+Without governance:
+
+* p99 explodes
+
+With governance:
+
+* p99 bounded
+
+Build graph for talk.
+
+---
+
+## Day 21: Practice Explanation
+
+Explain out loud:
+
+> “Why p50 improves but p99 worsens under aggressive sharing.”
+
+If you hesitate, refine.
+
+---
+
+# 🔵 WEEK 4 — Governance Architecture Mastery
+
+### 🎯 Objective
+
+Be able to defend architecture under hostile Q&A.
+
+---
+
+## Day 22–23: Governance Controls
+
+Deeply understand:
+
+* Admission control
+* Tiered GPU pools
+* KV isolation
+* Priority scheduling
+* Backpressure
+
+For each:
+Answer:
+
+* What it prevents
+* What it costs
+* What tradeoff it introduces
+
+---
+
+## Day 24–25: Build Final Architecture Diagram
+
+Your final slide must show:
+
+```
+Admission → Global Queue → Tiered Pools → Scheduler → KV Isolation
+```
+
+This is your signature slide.
+
+---
+
+## Day 26–27: Attack & Defend
+
+Prepare answers to:
+
+* Why not Kubernetes?
+* Why not MIG?
+* Why not public cloud SLA?
+* Why not dynamic batching only?
+* Is this just overengineering?
+
+You must answer calmly.
+
+---
+
+## Day 28–29: Full Dry Run
+
+Deliver full 20-minute talk.
+Record yourself.
+Identify weak areas.
+
+---
+
+## Day 30: Final Polish
+
+Refine:
+
+* Graph clarity
+* Terminology precision
+* Transition from efficiency → governance narrative
+
+---
+
+# 🎯 At End of 30 Days You Should Be Able To:
+
+✔ Explain Blackwell concurrency shift clearly
+✔ Explain KV interference clearly
+✔ Explain p99 mathematically
+✔ Defend governance as necessary
+✔ Show simulation evidence
+✔ Handle architect-level Q&A
+
+---
+
+# 🔥 Critical Rule
+
+Don’t passively read.
+
+Every week must produce:
+
+* 1 diagram
+* 1 simulation
+* 1 written explanation
+
+Output builds mastery.
+
+---
+
+If you want, next I can give you:
+
+* 📊 10 must-have graphs for your talk
+* 🎤 A Q&A defense cheat sheet
+* 🧠 A concept map of your entire thesis
+* 🏢 NVIDIA-level interview preparation version
+
+Tell me your next target.
