@@ -1,0 +1,498 @@
+Excellent — this is **Principal-level material**, not surface-level GPU talk.
+
+Below is a **structured master glossary** of every term you need to explain that abstract deeply and defensibly — across hardware, inference systems, and governance layers.
+
+I’ve grouped it logically so you can build a full conference narrative.
+
+---
+
+# 🔵 PART 1 — Blackwell & NVFP4 (Hardware & Economics Layer)
+
+---
+
+## 🧠 Blackwell Architecture
+
+* Successor to Hopper (H100/H200)
+* New SM design
+* Higher tensor throughput
+* Larger effective HBM capacity
+* Improved memory bandwidth efficiency
+* Better multi-instance isolation support
+
+---
+
+## 🧮 NVFP4
+
+* NVIDIA FP4 precision format
+* 4-bit floating-point representation
+* Enables:
+
+  * Model compression
+  * Larger batch size
+  * More KV cache per GPU
+* Critical for inference economics
+
+Related terms:
+
+* FP16
+* BF16
+* FP8
+* INT4
+* Mixed precision
+* Quantization-aware inference
+
+---
+
+## 💾 HBM (High Bandwidth Memory)
+
+* On-package GPU memory
+* HBM3 / HBM3e
+* Capacity (GB)
+* Bandwidth (TB/s)
+
+Key idea:
+Effective HBM capacity increases with:
+
+* Lower precision
+* Memory compression
+* Smarter KV layout
+
+---
+
+## 📊 Memory Bandwidth Pressure
+
+* Ratio of memory traffic to bandwidth
+* Memory-bound vs compute-bound workloads
+* Arithmetic intensity
+* Roofline model
+
+---
+
+## 🔥 SM (Streaming Multiprocessor)
+
+* Compute block of GPU
+* Warp scheduling
+* Tensor core pipelines
+* Occupancy
+
+---
+
+## 📈 GPU Utilization
+
+* SM utilization
+* Tensor core utilization
+* Memory controller utilization
+
+Important distinction:
+High utilization ≠ good latency.
+
+---
+
+# 🔵 PART 2 — LLM Inference Mechanics
+
+---
+
+## 🧠 Prefill Phase
+
+* Full prompt processing
+* Fully parallel
+* Compute heavy
+
+---
+
+## 🔄 Decode Phase
+
+* Token-by-token generation
+* Sequential
+* Latency sensitive
+* Often memory-bound
+
+---
+
+## 💾 KV Cache
+
+* Stores Key/Value tensors
+* Grows linearly with sequence length
+* Prevents recomputation
+
+Key terms:
+
+* KV footprint per token
+* KV fragmentation
+* KV eviction
+* Recompute events
+
+---
+
+## 🔁 Continuous Batching
+
+* Dynamically merges active requests
+* Improves throughput
+* Increases interference risk
+
+---
+
+## 🧵 Warp Divergence
+
+* Threads in same warp executing different paths
+* Causes performance inefficiency
+* Happens with heterogeneous sequences
+
+---
+
+## 📊 TTFT (Time to First Token)
+
+* Queue wait + prefill + scheduling delay
+
+---
+
+## ⏱ TPOT (Time per Output Token)
+
+* Decode latency per token
+
+---
+
+## 📉 p50 / p95 / p99 Latency
+
+* Tail behavior
+* Variance amplification
+* SLO violation zone
+
+---
+
+## 🧠 Long-Context Decoding
+
+* 8K, 32K, 128K tokens
+* Quadratic attention cost (O(n²))
+* KV memory explosion
+
+---
+
+## 🏗 Dense Multi-Tenancy
+
+* Many workloads share GPU
+* Different context lengths
+* Different QoS levels
+
+---
+
+# 🔵 PART 3 — Economics of Inference
+
+---
+
+## 💰 Cost per Token
+
+[
+\frac{\text{GPU cost/hour}}{\text{tokens/hour}}
+]
+
+---
+
+## 📊 Throughput Optimization
+
+* Tokens/sec
+* Requests/sec
+* Batch size scaling
+
+---
+
+## 🧮 Concurrency
+
+* Active sequences per GPU
+* Scheduler slots
+* Decode-step overlap
+
+Higher effective HBM → higher concurrency.
+
+---
+
+## 🔥 Utilization-First Scheduling
+
+Cloud-native pattern:
+
+* Maximize GPU occupancy
+* Ignore tail SLOs
+
+---
+
+# 🔵 PART 4 — The New Bottleneck: Cross-Workload Interference
+
+---
+
+## ⚠ Cross-Workload Interference
+
+Occurs when:
+
+* One tenant’s workload affects another’s latency
+* Shared KV space
+* Shared scheduler
+* Shared memory bandwidth
+
+---
+
+## 🧊 Neighbor Noise
+
+* Decode-phase coupling
+* Burst amplification
+* Queue spillover
+
+---
+
+## 🧠 Scheduler Contention
+
+* Warp-level scheduling delay
+* Kernel launch contention
+* Decode-step ordering conflicts
+
+---
+
+## 🔁 Recompute Amplification
+
+* KV eviction → recompute attention
+* Adds decode delay
+* Strong p99 correlation
+
+---
+
+## 📊 Active Sequence Heterogeneity
+
+* Short + long context mixing
+* Decode vs prefill mixing
+* Different batch phases
+
+---
+
+# 🔵 PART 5 — Governance Architecture (Core of Your Argument)
+
+---
+
+## 🚦 Admission Control
+
+* QPS caps
+* Concurrency caps
+* Context length limits
+* Reject-before-overload
+
+Purpose:
+Prevent queue explosion.
+
+---
+
+## 🏛 Tiered GPU Pools
+
+* Tier-0 (Fraud / Payments)
+* Tier-1 (Chat)
+* Best Effort (Batch)
+
+Isolation levels:
+
+* Reserved GPUs
+* MIG partitions
+* Logical quotas
+
+---
+
+## 🧊 KV Cache Isolation
+
+* Per-tenant KV quotas
+* No cross-eviction
+* Deterministic memory allocation
+
+---
+
+## 🎯 Priority-Aware Scheduling
+
+* Deadline-based scheduling
+* Class-based queues
+* Latency-sensitive first
+
+---
+
+## 🔁 Policy-Driven Backpressure
+
+* Throttle non-critical workloads
+* Pause batch jobs
+* Reduce decode parallelism
+
+---
+
+## 🧠 Deterministic Latency
+
+Means:
+
+* Bounded queue wait
+* No unexpected eviction
+* Stable decode step time
+* Predictable p99
+
+---
+
+# 🔵 PART 6 — Why Best-Effort Batching Fails
+
+---
+
+## ❌ Best-Effort Batching
+
+* Maximize throughput only
+* No isolation
+* No QoS differentiation
+
+Failure modes:
+
+* Tail amplification
+* Latency jitter
+* Queue collapse
+* KV thrashing
+
+---
+
+## 📉 Tail Amplification Effect
+
+Small variance → extreme p99 under high load.
+
+---
+
+## 🧮 Utilization vs Isolation Tradeoff
+
+* Higher utilization → higher interference
+* Stronger isolation → slightly lower utilization
+
+Blackwell shifts bottleneck from:
+Memory bandwidth → fairness & scheduling.
+
+---
+
+# 🔵 PART 7 — PyTorch + vLLM Stack Terms
+
+---
+
+## 🐍 PyTorch Inference Stack
+
+* CUDA Graphs
+* Autocast
+* Torch.compile
+* Tensor parallelism
+* Pipeline parallelism
+
+---
+
+## 🚀 vLLM
+
+* Continuous batching
+* PagedAttention
+* Efficient KV memory layout
+* GPU memory allocator
+
+---
+
+## 📦 Triton Inference Server
+
+* Model repository
+* Dynamic batching
+* Rate limiter
+* Scheduling policies
+
+---
+
+# 🔵 PART 8 — SLO-Compliant Systems
+
+---
+
+## 📜 SLO (Service Level Objective)
+
+* p99 < X ms
+* TTFT < Y ms
+* Availability %
+
+---
+
+## 📊 SLI (Service Level Indicator)
+
+* Actual measured latency
+* Throughput
+* Error rate
+
+---
+
+## 🔐 SLO Enforcement
+
+* Admission control
+* Isolation
+* Monitoring triggers
+* Automatic throttling
+
+---
+
+# 🔵 PART 9 — Instrumentation & Proof
+
+To defend this thesis, you must measure:
+
+* Queue wait time
+* Active sequence count
+* KV eviction count
+* Recompute token count
+* Decode step latency variance
+* Memory bandwidth utilization
+* SM occupancy
+* Context length distribution
+
+---
+
+# 🔵 PART 10 — Conceptual Framing Terms
+
+---
+
+## 🔥 Bandwidth-Bound Regime (H100 Era)
+
+Memory limited.
+
+## 🔵 Governance-Bound Regime (Blackwell Era)
+
+Fairness limited.
+
+---
+
+## 🏗 Control Plane vs Data Plane
+
+* Data Plane → GPU compute
+* Control Plane → policies, quotas, scheduling
+
+---
+
+## 🧠 OpenReg-Style Concepts
+
+Regulator-style controls:
+
+* Policy engine
+* Explicit quotas
+* Isolation domains
+* Priority tiers
+* Enforcement layer
+
+---
+
+# 🎯 If You Master These — You Can Defend This Talk
+
+To fully explain your abstract at deep level, you must be fluent in:
+
+1. GPU memory hierarchy
+2. LLM decode pipeline
+3. KV cache behavior
+4. Continuous batching math
+5. Scheduler fairness theory
+6. Tail latency amplification
+7. Admission control theory
+8. Multi-tenant resource isolation
+9. Cost-per-token modeling
+10. SLO engineering
+
+---
+
+If you’d like next, I can:
+
+* Turn this into a **conference-ready glossary slide**
+* Build a **layered architecture diagram**
+* Convert this into a **30-day mastery roadmap**
+* Or create a **mock Q&A defense sheet** for tough reviewers
+
+This is already strong material — you’re thinking at the right depth.
