@@ -1,0 +1,207 @@
+## Admission-Level Governance in LLM Systems
+
+In the **Blackwell + high-concurrency inference era**, admission control becomes the **first and most critical control point** in LLM governance.
+
+When GPUs can run at 90–95% utilization, the risk is no longer raw compute capacity — it is **uncontrolled workload amplification**. Admission-level governance prevents overload *before* it propagates into queue explosion, KV eviction, and p99 latency spikes.
+
+---
+
+# 1️⃣ What Is Admission-Level Governance?
+
+Admission-level governance is the **policy layer that decides whether a request is allowed to enter the system**.
+
+It answers:
+
+* Should this request be accepted?
+* Under what priority?
+* With what resource budget?
+* Or should it be delayed / throttled / rejected?
+
+It sits **before batching and GPU execution**.
+
+---
+
+# 2️⃣ Why It Is Critical in Modern LLM Inference
+
+In high-throughput systems (like those running on NVIDIA B200 or NVIDIA H100):
+
+* Continuous batching increases utilization
+* Long-context workloads inflate KV memory
+* Multi-tenant requests compete for cache
+* A single large request can degrade everyone’s p99
+
+Without admission control:
+
+> Utilization-first scheduling → Queue growth → KV thrash → p99 explosion
+
+With admission control:
+
+> SLO-aware gating → Stable concurrency → Predictable tail latency
+
+---
+
+# 3️⃣ Core Components of Admission-Level Governance
+
+### 🔹 1. Rate Limiting (QPS Caps)
+
+* Per-tenant limits
+* Per-model limits
+* Per-priority-tier limits
+
+Example:
+
+* Fraud detection: 500 RPS guaranteed
+* Chat: 200 RPS best effort
+
+---
+
+### 🔹 2. Concurrency Budgeting
+
+Limit:
+
+* Active sequences per model
+* Active decode slots
+* GPU-level concurrent sessions
+
+This prevents decode-step contention.
+
+---
+
+### 🔹 3. Context-Length Guardrails
+
+Reject or downscale:
+
+* Extremely long prompts
+* Abusive token budgets
+* Context beyond KV quota
+
+Why? Long prompts disproportionately consume memory and stall batching.
+
+---
+
+### 🔹 4. Priority Classification (Tiering)
+
+Example structure:
+
+| Tier   | Use Case         | Governance           |
+| ------ | ---------------- | -------------------- |
+| Tier-0 | Fraud / Payments | Strict SLO guarantee |
+| Tier-1 | Customer chat    | Soft SLO             |
+| BE     | Batch analytics  | Preemptible          |
+
+Admission control enforces isolation between these.
+
+---
+
+### 🔹 5. KV Cache Quotas
+
+Allocate:
+
+* Token budget per tenant
+* KV memory ceiling per workload
+
+Prevents one model from evicting another’s KV cache.
+
+---
+
+### 🔹 6. Dynamic Backpressure
+
+When system load > threshold:
+
+* Throttle low-priority workloads
+* Shed best-effort traffic
+* Preserve Tier-0 latency
+
+---
+
+# 4️⃣ Mathematical View (Queueing Perspective)
+
+Without governance:
+
+[
+Latency \propto \frac{1}{1 - \rho}
+]
+
+Where:
+
+[
+\rho = \frac{\lambda}{\mu}
+]
+
+As utilization (ρ) → 1, latency explodes non-linearly.
+
+Admission control caps ρ below a safe threshold (e.g., 0.85).
+
+That is the difference between:
+
+* 50ms steady p99
+  vs
+* 400ms unstable p99
+
+---
+
+# 5️⃣ Architectural Placement
+
+```
+Client
+   ↓
+API Gateway
+   ↓
+🛡 Admission Control Layer
+   ↓
+Priority Queue
+   ↓
+Batch Formation
+   ↓
+GPU Execution
+```
+
+Admission control must operate **before queue insertion**, not after.
+
+---
+
+# 6️⃣ Blackwell-Era Insight (Very Important)
+
+As memory bandwidth pressure reduces (NVFP4, higher HBM), GPUs allow:
+
+* More concurrent sequences
+* Larger context windows
+* Higher token throughput
+
+This increases system instability risk.
+
+The bottleneck shifts from:
+
+> Compute-bound → Governance-bound
+
+Admission-level governance becomes more important as GPUs become more powerful.
+
+---
+
+# 7️⃣ Real-World Failure Example
+
+Even small mistakes — like uninitialized tensors (`torch.empty`) producing NaNs — can propagate faster under high concurrency.
+
+Higher throughput amplifies small governance gaps.
+
+---
+
+# 8️⃣ Executive Summary (3 Lines)
+
+Admission-level governance ensures:
+
+* Only safe workload volume enters the system
+* Critical workloads are protected
+* Tail latency remains predictable
+
+It converts raw GPU power into deterministic performance.
+
+---
+
+If you'd like, I can now:
+
+* Convert this into a **conference-ready slide narrative**
+* Create a **clean architecture diagram (PNG style)**
+* Or frame it as a **research hypothesis (Problem → Control → Measured Outcome)** for PyTorch submission
+
+Given your governance + Blackwell direction, I’d recommend turning this into a hypothesis slide next.
